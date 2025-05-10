@@ -248,7 +248,7 @@ class TrainingSAE(SAE):
         super().__init__(base_sae_cfg)
         self.cfg = cfg  # type: ignore
 
-        if cfg.architecture == "standard" or cfg.architecture == "topk":
+        if cfg.architecture == "standard" or cfg.architecture == "topk" or cfg.architecture == "hyperbolic":
             self.encode_with_hidden_pre_fn = self.encode_with_hidden_pre
         elif cfg.architecture == "gated":
             self.encode_with_hidden_pre_fn = self.encode_with_hidden_pre_gated

@@ -40,6 +40,8 @@ from sae_lens.toolkit.pretrained_saes_directory import (
 
 T = TypeVar("T", bound="SAE")
 
+from sae_lens.euclidean_funcs import euclidean_to_hyperbolic, hyperbolic_to_euclidean
+
 
 @dataclass
 class SAEConfig:
@@ -52,6 +54,7 @@ class SAEConfig:
     activation_fn_str: str
     apply_b_dec_to_input: bool
     finetuning_scaling_factor: bool
+    C: float = -1.0  # for hyperbolic SAEsß
 
     # dataset it was trained on details.
     context_size: int
@@ -172,6 +175,9 @@ class SAE(HookedRootModule):
         elif self.cfg.architecture == "jumprelu":
             self.initialize_weights_jumprelu()
             self.encode = self.encode_jumprelu
+        elif self.cfg.architecture == "hyperbolic":
+            self.initialize_weights_basic()
+            self.cfg.C = cfg.activation_fn_kwargs.get("C", -1.0)
         else:
             raise ValueError(f"Invalid architecture: {self.cfg.architecture}")
 
@@ -397,6 +403,22 @@ class SAE(HookedRootModule):
             sae_out = sae_out + sae_error
         return self.hook_sae_output(sae_out)
 
+    def encode_hyperbolic(
+        self, x: Float[torch.Tensor, "... d_in"]
+    ) -> Float[torch.Tensor, "... d_sae"]:
+        """
+        Calculate SAE features from inputs
+        """
+        sae_in = self.process_sae_in(x)
+
+        # "... d_in, d_in d_sae -> ... d_sae",
+        hidden_pre = self.hook_sae_acts_pre(sae_in @ self.W_enc + self.b_enc)
+
+        h_hyp = euclidean_to_hyperbolic(hidden_pre, self.cfg.C)
+
+        # Run the post-hook if there exists one
+        return self.hook_sae_acts_post(self.activation_fn(h_hyp))
+
     def encode_gated(
         self, x: Float[torch.Tensor, "... d_in"]
     ) -> Float[torch.Tensor, "... d_sae"]:
@@ -457,6 +479,28 @@ class SAE(HookedRootModule):
         # "... d_sae, d_sae d_in -> ... d_in",
         sae_out = self.hook_sae_recons(
             self.apply_finetuning_scaling_factor(feature_acts) @ self.W_dec + self.b_dec
+        )
+
+        # handle run time activation normalization if needed
+        # will fail if you call this twice without calling encode in between.
+        sae_out = self.run_time_activation_norm_fn_out(sae_out)
+
+        # handle hook z reshaping if needed.
+        return self.reshape_fn_out(sae_out, self.d_head)  # type: ignore
+
+    def decode_hyperbolic(
+        self, feature_acts: Float[torch.Tensor, "... d_sae"]
+    ) -> Float[torch.Tensor, "... d_in"]:
+        """Decodes SAE feature activation tensor into a reconstructed input activation tensor."""
+        # "... d_sae, d_sae d_in -> ... d_in",
+        original_shape = feature_acts.shape
+        flattened_x = feature_acts.reshape(-1, original_shape[-1])
+        
+        # Apply the conversion
+        euclidean_x = hyperbolic_to_euclidean(flattened_x, self.cfg.C,)
+
+        sae_out = self.hook_sae_recons(
+            self.apply_finetuning_scaling_factor(euclidean_x) @ self.W_dec + self.b_dec
         )
 
         # handle run time activation normalization if needed
