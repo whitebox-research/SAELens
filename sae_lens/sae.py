@@ -177,6 +177,7 @@ class SAE(HookedRootModule):
             self.encode = self.encode_jumprelu
         elif self.cfg.architecture == "hyperbolic":
             self.initialize_weights_basic()
+            self.encode = self.encode_hyperbolic
             self.cfg.C = cfg.activation_fn_kwargs.get("C", -1.0)
         else:
             raise ValueError(f"Invalid architecture: {self.cfg.architecture}")
