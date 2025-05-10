@@ -54,7 +54,6 @@ class SAEConfig:
     activation_fn_str: str
     apply_b_dec_to_input: bool
     finetuning_scaling_factor: bool
-    C: float = -1.0  # for hyperbolic SAEsß
 
     # dataset it was trained on details.
     context_size: int
@@ -72,6 +71,7 @@ class SAEConfig:
     device: str
     sae_lens_training_version: str | None
     activation_fn_kwargs: dict[str, Any] = field(default_factory=dict)
+    C: float = -1.0  # for hyperbolic SAEsß
     neuronpedia_id: str | None = None
     model_from_pretrained_kwargs: dict[str, Any] = field(default_factory=dict)
     seqpos_slice: tuple[int | None, ...] = (None,)
@@ -495,9 +495,12 @@ class SAE(HookedRootModule):
         # "... d_sae, d_sae d_in -> ... d_in",
         original_shape = feature_acts.shape
         flattened_x = feature_acts.reshape(-1, original_shape[-1])
-        
+
         # Apply the conversion
-        euclidean_x = hyperbolic_to_euclidean(flattened_x, self.cfg.C,)
+        euclidean_x = hyperbolic_to_euclidean(
+            flattened_x,
+            self.cfg.C,
+        )
 
         sae_out = self.hook_sae_recons(
             self.apply_finetuning_scaling_factor(euclidean_x) @ self.W_dec + self.b_dec
