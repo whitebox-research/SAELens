@@ -9,6 +9,7 @@ def euclidean_to_hyperbolic_hook(x: torch.Tensor, hook_name: str,
     Forward‐hook wrapper around your euclidean_to_hyperbolic,
     discarding the hook_name and always returning a Tensor.
     """
+    print("euclidean_to_hyperbolic_hook!")
     # reuse your original logic, assuming x is a torch.Tensor
     norm = torch.norm(x, dim=-1, keepdim=True)
     c = torch.tensor(-curvature, device=x.device, dtype=x.dtype).abs()
@@ -29,6 +30,7 @@ def hyperbolic_to_euclidean_hook(x: torch.Tensor, hook_name: str,
     """
     Forward‐hook wrapper around your hyperbolic_to_euclidean.
     """
+    print("hyperbolic_to_euclidean_hook!")
     norm = torch.clamp(torch.norm(x, dim=-1, keepdim=True), min=eps, max=max_norm)
     c = torch.tensor(-curvature, device=x.device, dtype=x.dtype).abs()
     factor = 2 / (1 - c * (norm ** 2) + eps)
