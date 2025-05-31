@@ -193,11 +193,11 @@ class SAE(HookedRootModule):
 
         # set up hooks
         self.hook_sae_input = HookPoint()
-        self.hook_sae_input.add_perma_hook(euclidean_to_hyperbolic_hook, dir='fwd')
+        self.hook_sae_input.add_perma_hook(euclidean_to_hyperbolic_hook)
         self.hook_sae_acts_pre = HookPoint()
         self.hook_sae_acts_post = HookPoint()
         self.hook_sae_output = HookPoint()
-        self.hook_sae_output.add_perma_hook(hyperbolic_to_euclidean_hook, dir='fwd')
+        self.hook_sae_output.add_perma_hook(hyperbolic_to_euclidean_hook)
         self.hook_sae_recons = HookPoint()
         self.hook_sae_error = HookPoint()
 
