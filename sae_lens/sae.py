@@ -40,7 +40,6 @@ from sae_lens.toolkit.pretrained_saes_directory import (
 
 T = TypeVar("T", bound="SAE")
 
-from sae_lens.euclidean_funcs import euclidean_to_hyperbolic
 from sae_lens.euclidean_hooks import euclidean_to_hyperbolic_hook, hyperbolic_to_euclidean_hook
 
 
