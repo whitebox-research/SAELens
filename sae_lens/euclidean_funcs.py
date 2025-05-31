@@ -1,14 +1,13 @@
 import torch
 import torch.nn.functional as F
 
-def euclidean_to_hyperbolic_hook(activation, hook=None, **kwargs):
+def euclidean_to_hyperbolic_hook(activation, **kwargs):
     """
     Transform euclidean activations to hyperbolic space using the Poincaré ball model.
     
     Args:
         activation: Input tensor of shape (..., d) where d is the feature dimension
-        hook: Hook object (passed by TransformerLens hook system)
-        **kwargs: Additional keyword arguments from the hook system
+        **kwargs: Keyword arguments from the hook system (including 'hook' object)
     
     Returns:
         Transformed activations in hyperbolic space (Poincaré ball)
@@ -54,8 +53,7 @@ def hyperbolic_to_euclidean_hook(activation, hook=None, **kwargs):
     
     Args:
         activation: Input tensor in hyperbolic space (Poincaré ball) of shape (..., d)
-        hook: Hook object (passed by TransformerLens hook system)
-        **kwargs: Additional keyword arguments from the hook system
+        **kwargs: Keyword arguments from the hook system (including 'hook' object)
     
     Returns:
         Transformed activations in euclidean space
