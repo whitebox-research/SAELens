@@ -1,17 +1,13 @@
-import numpy as np
-import torch
-
-
 import torch
 import torch.nn.functional as F
 
-def euclidean_to_hyperbolic_hook(activation, hook_name=None, **kwargs):
+def euclidean_to_hyperbolic_hook(activation, hook=None, **kwargs):
     """
     Transform euclidean activations to hyperbolic space using the Poincaré ball model.
     
     Args:
         activation: Input tensor of shape (..., d) where d is the feature dimension
-        hook_name: Name of the hook (unused but required by hook interface)
+        hook: Hook object (passed by TransformerLens hook system)
         **kwargs: Additional keyword arguments from the hook system
     
     Returns:
@@ -52,13 +48,13 @@ def euclidean_to_hyperbolic_hook(activation, hook_name=None, **kwargs):
     return hyperbolic_activation
 
 
-def hyperbolic_to_euclidean_hook(activation, hook_name=None, **kwargs):
+def hyperbolic_to_euclidean_hook(activation, hook=None, **kwargs):
     """
     Transform hyperbolic activations back to euclidean space from Poincaré ball model.
     
     Args:
         activation: Input tensor in hyperbolic space (Poincaré ball) of shape (..., d)
-        hook_name: Name of the hook (unused but required by hook interface)
+        hook: Hook object (passed by TransformerLens hook system)
         **kwargs: Additional keyword arguments from the hook system
     
     Returns:
@@ -100,3 +96,38 @@ def hyperbolic_to_euclidean_hook(activation, hook_name=None, **kwargs):
                                      euclidean_activation)
     
     return euclidean_activation
+
+
+# Example usage with SAE hooks:
+"""
+# To transform input activations to hyperbolic space:
+sae.hook_sae_input.add_hook(euclidean_to_hyperbolic_hook)
+
+# To transform output reconstructions back to euclidean space:
+sae.hook_sae_recons.add_hook(hyperbolic_to_euclidean_hook)
+
+# Or if you want to transform the final output:
+sae.hook_sae_output.add_hook(hyperbolic_to_euclidean_hook)
+"""
+
+# Utility function to test the round-trip transformation
+def test_transformations(test_tensor):
+    """
+    Test that euclidean -> hyperbolic -> euclidean preserves the original tensor
+    """
+    print(f"Original tensor shape: {test_tensor.shape}")
+    print(f"Original tensor norm: {torch.norm(test_tensor, dim=-1).mean():.4f}")
+    
+    # Forward transformation
+    hyperbolic = euclidean_to_hyperbolic_hook(test_tensor)
+    print(f"Hyperbolic tensor norm: {torch.norm(hyperbolic, dim=-1).mean():.4f}")
+    
+    # Backward transformation
+    reconstructed = hyperbolic_to_euclidean_hook(hyperbolic)
+    print(f"Reconstructed tensor norm: {torch.norm(reconstructed, dim=-1).mean():.4f}")
+    
+    # Check reconstruction error
+    error = torch.norm(test_tensor - reconstructed, dim=-1).mean()
+    print(f"Reconstruction error: {error:.6f}")
+    
+    return hyperbolic, reconstructed
