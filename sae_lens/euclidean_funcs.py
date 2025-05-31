@@ -47,7 +47,7 @@ def euclidean_to_hyperbolic_hook(activation, **kwargs):
     return hyperbolic_activation
 
 
-def hyperbolic_to_euclidean_hook(activation, hook=None, **kwargs):
+def hyperbolic_to_euclidean_hook(activation, **kwargs):
     """
     Transform hyperbolic activations back to euclidean space from Poincaré ball model.
     
