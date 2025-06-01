@@ -15,7 +15,7 @@ from sae_lens.training.activations_store import ActivationsStore
 from sae_lens.training.optim import L1Scheduler, get_lr_scheduler
 from sae_lens.training.training_sae import TrainingSAE, TrainStepOutput
 
-from sae_lens.euclidean_hooks import exp_map_zero
+from sae_lens.training.euclidean_hooks import exp_map_zero
 
 # used to map between parameters which are updated during finetuning and the config str.
 FINETUNING_PARAMETERS = {
