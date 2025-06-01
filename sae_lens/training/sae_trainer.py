@@ -271,7 +271,7 @@ class SAETrainer:
         # https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html
         with self.autocast_if_enabled:
             train_step_output = self.sae.training_forward_pass(
-                sae_in=exp_map_zero(sae_in),
+                sae_in=sae_in,
                 dead_neuron_mask=self.dead_neurons,
                 current_l1_coefficient=self.current_l1_coefficient,
             )
