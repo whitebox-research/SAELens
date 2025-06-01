@@ -64,6 +64,28 @@ def exp_map_zero(x: torch.Tensor, c: float = 1.0, eps: float = 1e-5) -> torch.Te
 
         return y
 
+def log_map_zero(y: torch.Tensor, c: float = 1.0, eps: float = 1e-5) -> torch.Tensor:
+    """
+    Logarithmic map at the origin for the Poincaré ball model of curvature +c.
+    Maps hyperbolic points y ∈ B^d_c (the open ball of radius 1/√c) back to Euclidean space.
+
+    Args:
+        y (torch.Tensor):
+            A tensor of shape (..., d) containing hyperbolic vectors inside the Poincaré ball.
+        c (float, optional):
+            Positive curvature (default=1.0).
+        eps (float, optional):
+            Small epsilon to avoid division by zero for very small norms.
+
+    Returns:
+        torch.Tensor of shape (..., d):
+            The corresponding Euclidean vectors.
+    """
+    norm_y = y.norm(dim=-1, keepdim=True).clamp_min(eps)  # (..., 1)
+    sqrt_c = c**0.5
+    scale = (1.0 / sqrt_c) * torch.atanh(sqrt_c * norm_y) / norm_y  # (..., 1)
+    x = y * scale  # (..., d)
+    return x
 
 class Step(torch.autograd.Function):
     @staticmethod
@@ -421,6 +443,10 @@ class TrainingSAE(SAE):
         per_item_mse_loss = self.mse_loss_fn(sae_out, sae_in)
         mse_loss = per_item_mse_loss.sum(dim=-1).mean()
 
+        # check loss for original input and output
+        new_mse_loss = self.mse_loss_fn(log_map_zero(sae_out), log_map_zero(sae_in))
+        new_mse_loss = new_mse_loss.sum(dim=-1).mean()
+
         losses: dict[str, float | torch.Tensor] = {}
 
         if self.cfg.architecture == "gated":
@@ -490,6 +516,7 @@ class TrainingSAE(SAE):
             losses["l1_loss"] = l1_loss
 
         losses["mse_loss"] = mse_loss
+        losses["old_mse_loss"] = new_mse_loss
 
         return TrainStepOutput(
             sae_in=sae_in,
