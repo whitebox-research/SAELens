@@ -413,7 +413,8 @@ class TrainingSAE(SAE):
     ) -> TrainStepOutput:
         # do a forward pass to get SAE out, but we also need the
         # hidden pre.
-        feature_acts, hidden_pre = self.encode_with_hidden_pre_fn(exp_map_zero(sae_in))
+        sae_in = exp_map_zero(sae_in)  # type: ignore
+        feature_acts, hidden_pre = self.encode_with_hidden_pre_fn(sae_in)
         sae_out = self.decode(feature_acts)
 
         # MSE LOSS
