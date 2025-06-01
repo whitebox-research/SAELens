@@ -15,6 +15,8 @@ from sae_lens.training.activations_store import ActivationsStore
 from sae_lens.training.optim import L1Scheduler, get_lr_scheduler
 from sae_lens.training.training_sae import TrainingSAE, TrainStepOutput
 
+from sae_lens.euclidean_hooks import exp_map_zero
+
 # used to map between parameters which are updated during finetuning and the config str.
 FINETUNING_PARAMETERS = {
     "scale": ["scaling_factor"],
@@ -235,7 +237,7 @@ class SAETrainer:
         # https://pytorch.org/tutorials/recipes/recipes/amp_recipe.html
         with self.autocast_if_enabled:
             train_step_output = self.sae.training_forward_pass(
-                sae_in=sae_in,
+                sae_in=exp_map_zero(sae_in),
                 dead_neuron_mask=self.dead_neurons,
                 current_l1_coefficient=self.current_l1_coefficient,
             )

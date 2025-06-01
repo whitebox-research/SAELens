@@ -129,3 +129,38 @@ def test_transformations(test_tensor):
     print(f"Reconstruction error: {error:.6f}")
     
     return hyperbolic, reconstructed
+
+def exp_map_zero(x: torch.Tensor, c: float = 1.0, eps: float = 1e-5) -> torch.Tensor:
+    """
+    Exponential map at the origin for the Poincaré ball model of curvature +c.
+    Maps Euclidean vectors x ∈ R^d to points in the Poincaré ball (||⋅|| < 1/sqrt(c)).
+
+    Args:
+        x (torch.Tensor):
+            A tensor of shape (..., d) containing Euclidean activations.
+        c (float, optional):
+            Positive curvature (default=1.0). Points will lie in the ball of radius 1/sqrt(c).
+        eps (float, optional):
+            A small epsilon to avoid division by zero when ||x|| is extremely small.
+
+    Returns:
+        torch.Tensor of shape (..., d):
+            The corresponding points in the Poincaré ball of curvature +c.
+            Each vector has norm < 1/sqrt(c).
+    """
+    # Compute the Euclidean norm of each vector in the last dimension:
+    norm_x = x.norm(dim=-1, keepdim=True).clamp_min(eps)  # (..., 1)
+
+    # sqrt_c = sqrt(c), used in the exponential map formula:
+    sqrt_c = c**0.5
+
+    # tanh_arg = √c * ||x||
+    tanh_arg = sqrt_c * norm_x
+
+    # exp_map = tanh(√c * ||x||) * (x / (√c * ||x||))
+    # If ||x|| is very small, x/norm_x ≈ unit direction; the clamp_min prevents division by zero.
+    direction = x / norm_x  # (..., d)
+    scale = torch.tanh(tanh_arg) / (sqrt_c * norm_x)  # (..., 1)
+    y = direction * scale  # (..., d)
+
+    return y
